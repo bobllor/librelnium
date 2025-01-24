@@ -18,17 +18,28 @@ class Driver:
 
         self.driver.get(url)
     
-    def switch_frames(self, frame_name: str = 'gsft_main') -> None:
+    def switch_frames(self, frame_name: str = 'gsft_main', *, return_default: bool = True) -> None:
         '''Switch frames on the current page.
         
         Raises a `TimeoutException` and a `NoSuchFrameException`, which keeps the frame on the default content.
+
+        This method does NOT handle shadow roots in the DOM, it explicitly switches to the frame on a DOM without any checks.
+        Manual navigation of shadow roots is required if it exists.
+
+        For more fine control over frame switching, use the built-in WebDriver method `switch_to`.
 
         Parameters
         ----------
             `frame_name`: A `str` that is used as the ID to switch to the frame inside the current page.
             Default is `gsft_main`.
+
+        Optional Parameters
+        ----------
+            `return_default`: A `bool` used to switch the drive back to the default content. Default is `True`.
+            Use `False` if nested frame switching is required.
         '''
-        self.driver.switch_to.default_content()
+        if return_default:
+            self.driver.switch_to.default_content()
         
         try:
             self.driver_wait.until(
@@ -46,8 +57,11 @@ class Driver:
         if by is None or value is None:
             raise TypeError
 
-        ele = self.driver_wait(EC.presence_of_element_located(
-            (by, value)
-        ))
+        try:
+            ele = self.driver_wait(EC.presence_of_element_located(
+                (by, value)
+            ))
+        except TimeoutException:
+            return None
         
         return ele
