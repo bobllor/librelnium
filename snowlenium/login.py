@@ -1,7 +1,7 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from .base import Driver
+from .driver_base import Driver
 from getpass import getpass
 
 import time
@@ -26,15 +26,13 @@ class Login(Driver):
     
     def login(self):
         '''
-        Login into SNOW.
+        Login into ServiceNow.
         '''
-        
-        # used in case login page is changed due to new SNOW instance.
         self.switch_frames()
 
-        self.driver_wait.until(EC.presence_of_element_located((By.ID, "user_name"))).send_keys(self.user)
-        self.driver_wait.until(EC.presence_of_element_located((By.ID, "user_password"))).send_keys(self.pw)
-        self.driver_wait.until(EC.presence_of_element_located((By.ID, "sysverb_login"))).click()
+        self.presence_find_element(By.ID, "user_name").send_keys(self.user)
+        self.presence_find_element(By.ID, "user_password").send_keys(self.pw)
+        self.presence_find_element(By.ID, "sysverb_login").click()
 
         self.driver.switch_to.default_content()
         
