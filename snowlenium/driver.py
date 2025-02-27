@@ -7,15 +7,21 @@ from selenium.common.exceptions import TimeoutException, NoSuchFrameException
 
 class Driver:
     '''Base class for WebDriver related navigation and methods.'''
-    def __init__(self):
-        self.driver = WebDriver()
-        self.driver_wait = WebDriverWait(self.driver, 6)
+    def __init__(self, driver: WebDriver = None, options = None):
+        self.driver = driver if driver else WebDriver()
 
+        self.wait_time = 6
+        self.driver_wait = WebDriverWait(self.driver, self.wait_time)
+        
+    def set_wait_timer(self, value: int = 6) -> None:
+        '''Sets the wait timer for `WebDriverWait` to a given value. By default it is 6 seconds.'''
+        self.wait_time = value
+    
     def go_to(self, url: str) -> None:
-        '''Use the driver to go to a chosen link.'''
+        '''Goes to the given URL argument.'''
         if not isinstance(url, str):
-            raise TypeError
-
+            raise TypeError(f'Expected url to be type str but got {type(url)}')
+        
         self.driver.get(url)
     
     def switch_frames(self, frame_name: str = 'gsft_main', *, return_default: bool = True) -> None:
@@ -50,15 +56,12 @@ class Driver:
             self.driver.switch_to.default_content()
     
     def presence_find_element(self, by=By.ID, value: str = None) -> WebElement | None:
-        '''Uses `WebDriverWait` to find and return a `WebElement`.
-        
-        If no element is found, return `None`.
-        '''
+        '''Uses `WebDriverWait` to find and return a `WebElement`. If no element is found, return `None`.'''
         if by is None or value is None:
             raise TypeError
 
         try:
-            ele = self.driver_wait(EC.presence_of_element_located(
+            ele = self.driver_wait.until(EC.presence_of_element_located(
                 (by, value)
             ))
         except TimeoutException:
