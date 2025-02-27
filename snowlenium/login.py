@@ -1,7 +1,7 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from .driver_base import Driver
+from .driver import Driver
 from getpass import getpass
 
 import time
@@ -19,8 +19,8 @@ class Login(Driver):
         `password`: The password to login. Default is `None` which prompts a manual input if no value is passed. 
         The input for `password` is hidden.
     '''
-    def __init__(self, *, username: str = None, password: str = None):
-        super().__init__()
+    def __init__(self, driver, *, username: str = None, password: str = None):
+        super().__init__(driver)
         self.user = username if username is not None else input('Enter your username: ')
         self.pw = password if password is not None else getpass('Enter your password: ')
     
@@ -37,7 +37,6 @@ class Login(Driver):
         ----------
             `has_frame`: A `bool` used to indicate that there is a frame to switch to on the page. By default it is `True`.
         '''
-
         if url is not None:
             self.driver.get(url)
         
@@ -49,8 +48,6 @@ class Login(Driver):
         self.presence_find_element(By.ID, "sysverb_login").click()
 
         self.driver.switch_to.default_content()
-        
-        print("Login complete.")
 
         # wait required due to load times for SNOW.
         time.sleep(8)
