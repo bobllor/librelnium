@@ -24,18 +24,32 @@ class Login(Driver):
         self.user = username if username is not None else input('Enter your username: ')
         self.pw = password if password is not None else getpass('Enter your password: ')
     
-    def login(self, url: str = None, *, has_frame: bool = True):
+    def login(self, url: str = None, 
+              *, 
+              has_frame: bool = True,
+              search_by: By | str = By.ID,
+              login_val: dict[str, str] = {
+                  'user_id': 'user_name',
+                  'password_id': 'user_password',
+                  'login_button': 'sysverb_login'
+              }):
         '''Login into ServiceNow.
-
-        For more control over frame switching, use the built-in method `switch_frames` with the driver.
 
         Parameters
         ----------
-            `url`: Accepts a `str` and uses the driver to navigate to the given link. By default it is `None`.
+            url: str 
+                Accepts a `str` and uses the driver to navigate to the given link. By default it is `None`.
 
-        Optional Parameters
-        ----------
-            `has_frame`: A `bool` used to indicate that there is a frame to switch to on the page. By default it is `True`.
+            has_frame: bool
+                A `bool` used to indicate that there is a frame to switch to on the page. By default it is `True`.
+
+            search_by: By | str
+                Used to indicate what to search the element by. By default, it searches `By.ID` or `'id'`.
+
+            login_val: dict
+                A dictionary containing three keys: `user_id`, `password_id`, `login_button`, which are the
+                login field elements that allows the driver to interact with the login. By default, it has
+                values that uses the ID of the element.
         '''
         if url is not None:
             self.driver.get(url)
@@ -43,9 +57,13 @@ class Login(Driver):
         if has_frame is True:
             self.switch_frames()
 
-        self.presence_find_element(By.ID, "user_name").send_keys(self.user)
-        self.presence_find_element(By.ID, "user_password").send_keys(self.pw)
-        self.presence_find_element(By.ID, "sysverb_login").click()
+        user = login_val.get('user_id')
+        pass_ = login_val.get('password_id')
+        button = login_val.get('login_button')
+
+        self.presence_find_element(search_by, user).send_keys(self.user)
+        self.presence_find_element(search_by, pass_).send_keys(self.pw)
+        self.presence_find_element(search_by, button).click()
 
         self.driver.switch_to.default_content()
 
