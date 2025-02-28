@@ -3,7 +3,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.remote.shadowroot import ShadowRoot
 from selenium.common.exceptions import TimeoutException, NoSuchFrameException
+from typing import Iterable
 
 class Driver:
     '''Base class for WebDriver related navigation and methods.'''
@@ -55,8 +57,52 @@ class Driver:
         except (TimeoutException, NoSuchFrameException):
             self.driver.switch_to.default_content()
     
-    def presence_find_element(self, by=By.ID, value: str = None) -> WebElement | None:
-        '''Uses `WebDriverWait` to find and return a `WebElement`. If no element is found, return `None`.'''
+    def return_shadow_root(self, *, by: str = By.CSS_SELECTOR, html_elements: Iterable[str] = None) -> ShadowRoot:
+        '''Returns a ShadowRoot of the last element in any iterable structure.
+
+        Navigating a DOM with shadow roots is different from directly accessing a HTML element.
+        The elements inside the `html_elements` iterable must have a `#shadow-root` as its child, 
+        otherwise `NoSuchElementException` is thrown.
+
+        `html_elements` must be a minimum size 1.
+        
+        Parameters
+        ----------
+            by: str
+                Locator strategy, can use the literal string equivalent or the By strategy. 
+                By default it locates by `css selector`.
+
+            html_elements: Iterable[str]
+                Any ordered iterable structure containing HTML elements that contains a shadow root.
+        '''
+        if not any(isinstance(element, str) for element in html_elements):
+            raise TypeError(f'Got unexpected type in html_elements')
+
+        if len(html_elements) < 1:
+            raise ValueError(f'Cannot have an empty iterable, got {len(html_elements)} size')
+        
+        sr = self.driver.find_element(by, html_elements[0]).shadow_root
+        
+        if len(html_elements) > 1:
+            for s_root in html_elements[1:]:
+                sr = sr.find_element(by, s_root).shadow_root
+
+        return sr
+            
+    
+    def presence_find_element(self, value: str = None, *, by=By.ID) -> WebElement | None:
+        '''Return a `WebElement` by using an expected condition and `WebDriverWait`. 
+        If no element is found, return `None`.
+        
+        Parameters
+        ----------
+            value: str
+                The attribute of a HTML element. This can be any `str` value that matches the locator strategy.
+           
+            by: str
+                Locator strategy, can use the literal string equivalent or the By strategy. 
+                By default it locates by `id`.
+        '''
         if by is None or value is None:
             raise TypeError
 
