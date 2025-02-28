@@ -6,12 +6,19 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.remote.shadowroot import ShadowRoot
 from selenium.common.exceptions import TimeoutException, NoSuchFrameException
 from typing import Iterable
+import selenium.webdriver.chrome.webdriver as chrome
 
 class Driver:
     '''Base class for WebDriver related navigation and methods.'''
     def __init__(self, driver: WebDriver = None, options = None):
-        self.driver = driver if driver else WebDriver()
-
+        '''
+        Parameters
+        ----------
+            driver: WebDriver
+                Any WebDriver object. By default it uses the Chrome WebDriver.
+        '''
+        self.driver = driver if driver else chrome.WebDriver()
+        
         self.wait_time = 6
         self.driver_wait = WebDriverWait(self.driver, self.wait_time)
         
@@ -57,7 +64,7 @@ class Driver:
         except (TimeoutException, NoSuchFrameException):
             self.driver.switch_to.default_content()
     
-    def return_shadow_root(self, *, by: str = By.CSS_SELECTOR, html_elements: Iterable[str] = None) -> ShadowRoot:
+    def navigate_shadow_root(self, *, by: str = By.CSS_SELECTOR, html_elements: Iterable[str] = None) -> ShadowRoot:
         '''Returns a ShadowRoot of the last element in any iterable structure.
 
         Navigating a DOM with shadow roots is different from directly accessing a HTML element.
@@ -89,7 +96,6 @@ class Driver:
 
         return sr
             
-    
     def presence_find_element(self, value: str = None, *, by=By.ID) -> WebElement | None:
         '''Return a `WebElement` by using an expected condition and `WebDriverWait`. 
         If no element is found, return `None`.
