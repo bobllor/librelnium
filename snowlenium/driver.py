@@ -33,25 +33,23 @@ class Driver:
         
         self.driver.get(url)
     
-    def switch_frames(self, frame_name: str = 'gsft_main', *, return_default: bool = True) -> None:
-        '''Switch frames on the current page.
-        
-        Raises a `TimeoutException` and a `NoSuchFrameException`, which keeps the frame on the default content.
+    def switch_frames(self, frame_name: str = 'gsft_main', *, return_default: bool = True):
+        '''Switch frames on the current page. If the frame isn't found, it will remain on the default frame
+        of the page.
 
-        This method does NOT handle shadow roots in the DOM, it explicitly switches to the frame on a DOM without any checks.
-        Manual navigation of shadow roots is required if it exists.
+        This method does not account for shadow roots inside the
 
         For more fine control over frame switching, use the built-in WebDriver method `switch_to`.
 
         Parameters
         ----------
-            `frame_name`: A `str` that is used as the ID to switch to the frame inside the current page.
-            Default is `gsft_main`.
+            frame_name: str 
+                A string that represents the frame ID attribute of the current page.
+                By default the value is `gsft_main`.
 
-        Optional Parameters
-        ----------
-            `return_default`: A `bool` used to switch the drive back to the default content. Default is `True`.
-            Use `False` if nested frame switching is required.
+            return_default: bool 
+                Switch the drive back to the default frame of the page before switching to a new frame.
+                Ensures that there is no frame before interacting with a frame. Default is `True`.
         '''
         if return_default:
             self.driver.switch_to.default_content()
@@ -63,6 +61,10 @@ class Driver:
                 )
         except (TimeoutException, NoSuchFrameException):
             self.driver.switch_to.default_content()
+    
+    def switch_default_frame(self):
+        '''Returns back to the default frame.'''
+        self.driver.switch_to.default_content()
     
     def navigate_shadow_root(self, *, by: str = By.CSS_SELECTOR, html_elements: Iterable[str] = None) -> ShadowRoot:
         '''Returns a ShadowRoot of the last element in any iterable structure.
