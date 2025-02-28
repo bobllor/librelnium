@@ -27,12 +27,8 @@ class Login(Driver):
     def login(self, url: str = None, 
               *, 
               has_frame: bool = True,
-              search_by: By | str = By.ID,
-              login_val: dict[str, str] = {
-                  'user_id': 'user_name',
-                  'password_id': 'user_password',
-                  'login_button': 'sysverb_login'
-              }):
+              search_by: str = 'id',
+              login_val: dict[str, str] = None):
         '''Login into ServiceNow.
 
         Parameters
@@ -43,23 +39,36 @@ class Login(Driver):
             has_frame: bool
                 A `bool` used to indicate that there is a frame to switch to on the page. By default it is `True`.
 
-            search_by: By | str
-                Used to indicate what to search the element by. By default, it searches `By.ID` or `'id'`.
+            search_by: str
+                Used to indicate what to search the element by. By default it searches by element `id`.
+                Valid options `id`, `xpath`, `link text`, `partial link text`, `name`, `tag name`,
+                `class name`, and `css selector`.
 
             login_val: dict
                 A dictionary containing three keys: `user_id`, `password_id`, `login_button`, which are the
-                login field elements that allows the driver to interact with the login. By default, it has
-                values that uses the ID of the element.
+                HTML login field elements that allows the driver to interact with the login. By default, it has
+                default values of element IDs.
         '''
         if url is not None:
             self.driver.get(url)
-        
+
+        if login_val is None:
+            login_val = {
+                'user_id': 'user_name',
+                'password_id': 'user_password',
+                'login_button': 'sysverb_login'
+            }
+
         if has_frame is True:
             self.switch_frames()
 
         user = login_val.get('user_id')
         pass_ = login_val.get('password_id')
         button = login_val.get('login_button')
+
+        for item in [user, pass_, button]:
+            if not isinstance(item, str):
+                raise TypeError(f'Expected {item}, got type {type(item)}')
 
         self.presence_find_element(search_by, user).send_keys(self.user)
         self.presence_find_element(search_by, pass_).send_keys(self.pw)
