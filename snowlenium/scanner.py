@@ -5,7 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
 class VTBScanner(Driver):
-    def __init__(self, driver, lane_xpath: str):
+    def __init__(self, driver):
         '''Class used to scan for items on the Virtual Task Board (VTB) of Service Now.
 
         This class assumes that the driver is on the correct URL.
@@ -16,7 +16,6 @@ class VTBScanner(Driver):
                 The HTML xpath of a lane in the VTB. 
         '''
         super().__init__(driver)
-        self.lane_xpath = lane_xpath
     
     def get_elements(self, search_val: str, xpath_str: str) -> list[WebElement] | list:
         '''Returns a list of WebElements on the VTB. If none found, an empty list is returned.
@@ -44,23 +43,26 @@ class VTBScanner(Driver):
         
         return ritm_elements
     
-    def get_element(self, text_val: str) -> WebElement | None:
+    def get_element(self, search_val: str, xpath_str = str) -> WebElement | None:
         '''Returns a WebElement that contains the matching text value located in the container.
         If not found, None is returned.
+
+        It uses the XML function `contains()` to get the result, which is **case sensitive**.
         
         Parameters
         ----------
-            url: str
-                The URL of the VTB.
+            search_val: str
+                Text that can be found in the card container on the VTB. The elements returned from
+                this method searches elements that contain the text value.
 
-            text_val: str
-                A `string` that can be found in the card container on the VTB. The elements returned from
-                this method searches elements that contain the text value. It is case sensitive.
+            xpath_str: str
+                The locator value that is used to search for. This must be in a format of a
+                relative path and a **XPATH**. For example, `//li[@foo="0" and @bar="0"]//a`,
+                where the search is performed inside the `<a>` element.
         '''
         try:
-            ritm_element = self.driver_wait.until(
-                EC.presence_of_element_located(
-                    (By.XPATH, f'{self.lane_xpath}//a[contains(text(), "{text_val}")]')))
+            ritm_element = self.presence_find_element(
+                f'{xpath_str}[contains(text(), "{search_val}")]', by=By.XPATH)
         except TimeoutException:
             return None
         
