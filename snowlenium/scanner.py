@@ -18,30 +18,26 @@ class VTBScanner(Driver):
         super().__init__(driver)
         self.lane_xpath = lane_xpath
     
-    def get_elements(self, text_val: str, loc_val: str, *, by: str = By.XPATH) -> list[WebElement] | list[None]:
+    def get_elements(self, search_val: str, xpath_str: str) -> list[WebElement] | list:
         '''Returns a list of WebElements on the VTB. If none found, an empty list is returned.
 
-        The driver finds the elements based on the value of `text_val`, and returns the WebElements that
-        contains `text_val`. It uses the XML function `contains()` to get the result. This is case sensitive.
+        The method searches for the elements based on the value of `search_val`, and returns filtered WebElements
+        containing `search_val`. It uses the XML function `contains()` to get the result, which is **case sensitive**.
         
         Parameters
         ----------
-            text_val: str
+            search_val: str
                 Text that can be found in the card container on the VTB. The elements returned from
                 this method searches elements that contain the text value.
 
-            loc_val: str
+            xpath_str: str
                 The locator value that is used to search for. This must be in a format of a
-                relative path. For example, `//li[@foo="0" and @bar="0"]//a`, where the driver
-                is searching the `<a>` tag for the text value in the HTML element `//li`.
-
-            by: str
-                Locator strategy, can use the literal string equivalent or the By strategy. 
-                By default it locates by `xpath`.
+                relative path and a **XPATH**. For example, `//li[@foo="0" and @bar="0"]//a`,
+                where the search is performed inside the `<a>` element.
         '''
         try:
             ritm_elements = self.driver_wait.until(
-                EC.presence_of_all_elements_located((by, f'{loc_val}[contains(text(), "{text_val}")]'))
+                EC.presence_of_all_elements_located((By.XPATH, f'{xpath_str}[contains(text(), "{search_val}")]'))
             )
         except TimeoutException:
             return []
