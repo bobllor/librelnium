@@ -2,7 +2,7 @@ from .driver import Driver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from typing import Iterable
 
 class VTBScanner(Driver):
@@ -18,7 +18,7 @@ class VTBScanner(Driver):
         '''
         super().__init__(driver)
     
-    def get_elements(self, search_val: str, xpath_str: str) -> list[WebElement] | list:
+    def get_elements(self, search_val: str, xpaths: Iterable[str]) -> list[WebElement] | list:
         '''Returns a list of WebElements on the VTB. If none found, an empty list is returned.
 
         The method searches for the elements based on the value of `search_val`, and returns filtered WebElements
@@ -35,14 +35,13 @@ class VTBScanner(Driver):
                 relative path and a **XPATH**. For example, `//li[@foo="0" and @bar="0"]//a`,
                 where the search is performed inside the `<a>` element.
         '''
-        try:
-            ritm_elements = self.driver_wait.until(
-                EC.presence_of_all_elements_located((By.XPATH, f'{xpath_str}[contains(text(), "{search_val}")]'))
-            )
-        except TimeoutException:
-            return []
+        elements = self._get_nested_element(By.XPATH, xpaths[:-1])
         
-        return ritm_elements
+        if elements != None:
+            elements = elements.find_elements(By.XPATH,
+                f'{xpaths[-1]}[contains(text(), "{search_val}")]')
+        
+        return elements
     
     def get_element(self, search_val: str, xpaths = Iterable[str]) -> WebElement | None:
         '''Returns a WebElement that contains the matching text value located in the container.
@@ -67,16 +66,35 @@ class VTBScanner(Driver):
         '''
         if len(xpaths) < 0:
             raise ValueError(f'Cannot have an empty iterable.')
-
-        try:
-            for path in xpaths:
-                ritm_element = self.presence_find_element(
-                    f'{path}[contains(text(), "{search_val}")]', by=By.XPATH)
-        except TimeoutException:
-            return None
         
-        return ritm_element
+        
+        element = self._get_nested_element(By.XPATH, xpaths[:-1])
 
-    def drag_task(self, ritm: str):
+        if element != None:
+            try:
+                element = element.find_element(By.XPATH,
+                    f'{xpaths[-1]}[contains(text(), "{search_val}")]')
+            except NoSuchElementException:
+                return None
+            
+        return element
+    
+    def _get_nested_element(self, by: str, iterators: Iterable[str]) -> WebElement | None:
+        '''Iterate a iterable structure and return the associated WebElement.
+        
+        If not found, then `None` is returned.
+        '''
+        element = self.presence_find_element(iterators[0], by=by)
+
+        if element != None:
+            try:
+                for i in iterators[1:]:
+                    element = element.find_element(by, i)
+            except NoSuchElementException:
+                return None
+        
+        return element
+
+    def drag_task(self, search_val: str):
         '''Drags the task over to a desired swim lane on the VTB.'''
         pass
