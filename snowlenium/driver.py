@@ -4,7 +4,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.remote.shadowroot import ShadowRoot
-from selenium.common.exceptions import TimeoutException, NoSuchFrameException
+from selenium.common.exceptions import TimeoutException, NoSuchFrameException, NoSuchElementException
 from typing import Iterable
 import selenium.webdriver.chrome.webdriver as chrome
 
@@ -122,3 +122,19 @@ class Driver:
             return None
         
         return ele
+    
+    def _iterate_element_array(self, by: str, iterators: Iterable[str]) -> WebElement | None:
+        '''Iterate an iterable structure and return the associated WebElement.
+        
+        If not found, then `None` is returned.
+        '''
+        element = self.presence_find_element(iterators[0], by=by)
+
+        if element != None:
+            try:
+                for i in iterators[1:]:
+                    element = element.find_element(by, i)
+            except NoSuchElementException:
+                return None
+        
+        return element

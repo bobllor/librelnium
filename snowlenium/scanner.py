@@ -23,6 +23,9 @@ class VTBScanner(Driver):
 
         The method searches for the elements based on the value of `search_val`, and returns filtered WebElements
         containing `search_val`. It uses the XML function `contains()` to get the result, which is **case sensitive**.
+
+        If attempting to find elements in a certain lane, the ending xpath **must be a relative xpath**.
+        If an absolute xpath is used, then the search will occur for the entire page.
         
         Parameters
         ----------
@@ -35,7 +38,7 @@ class VTBScanner(Driver):
                 relative path and a **XPATH**. For example, `//li[@foo="0" and @bar="0"]//a`,
                 where the search is performed inside the `<a>` element.
         '''
-        elements = self._get_nested_element(By.XPATH, xpaths[:-1])
+        elements = self._iterate_element_array(By.XPATH, xpaths[:-1])
         
         if elements != None:
             elements = elements.find_elements(By.XPATH,
@@ -67,8 +70,7 @@ class VTBScanner(Driver):
         if len(xpaths) < 0:
             raise ValueError(f'Cannot have an empty iterable.')
         
-        
-        element = self._get_nested_element(By.XPATH, xpaths[:-1])
+        element = self._iterate_element_array(By.XPATH, xpaths[:-1])
 
         if element != None:
             try:
@@ -77,22 +79,6 @@ class VTBScanner(Driver):
             except NoSuchElementException:
                 return None
             
-        return element
-    
-    def _get_nested_element(self, by: str, iterators: Iterable[str]) -> WebElement | None:
-        '''Iterate a iterable structure and return the associated WebElement.
-        
-        If not found, then `None` is returned.
-        '''
-        element = self.presence_find_element(iterators[0], by=by)
-
-        if element != None:
-            try:
-                for i in iterators[1:]:
-                    element = element.find_element(by, i)
-            except NoSuchElementException:
-                return None
-        
         return element
 
     def drag_task(self, search_val: str):
