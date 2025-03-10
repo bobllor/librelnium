@@ -7,17 +7,33 @@ from selenium.webdriver.remote.shadowroot import ShadowRoot
 from selenium.common.exceptions import TimeoutException, NoSuchFrameException, NoSuchElementException
 from typing import Iterable
 import selenium.webdriver.chrome.webdriver as chrome
+import selenium.webdriver.firefox.webdriver as firefox
+from selenium.webdriver.chrome.options import Options as chromeOptions
 
 class Driver:
     '''Base class for WebDriver related navigation and methods.'''
-    def __init__(self, driver: WebDriver = None, options = None):
+    def __init__(self, driver: WebDriver = None, option_args: list[str] = None):
         '''
         Parameters
         ----------
-            driver: WebDriver
-                Any WebDriver object. By default it uses the Chrome WebDriver.
+            driver_type: str
+                A string representating a `WebDriver`. By default, it uses the chrome `WebDriver`.
+                Valid options are `['chrome', 'firefox', 'edge']`.
+            
+            options: list[str]
+                A list of strings that contain arguments to add into the options for the driver.
+                By default, logging is disabled for the Chrome webdriver if `None`.
         '''
-        self.driver = driver if driver else chrome.WebDriver()
+        if option_args is not None and not any(isinstance(option, str) for option in option_args):
+            raise TypeError('Got unexpected type in option_args.')
+        
+        if option_args is None:
+            options = chromeOptions()
+            options.add_argument('--log-level=3')
+            options.add_experimental_option('excludeSwitches', ['enable-logging'])
+            options.add_argument('--disable-logging')
+
+        self.driver: WebDriver = driver if driver is not None else chrome.WebDriver(options=options)
         
         self.wait_time = 6
         self.driver_wait = WebDriverWait(self.driver, self.wait_time)
@@ -123,16 +139,16 @@ class Driver:
         
         return ele
     
-    def _iterate_element_array(self, by: str, iterators: Iterable[str]) -> WebElement | None:
+    def _traverse_locators(self, by: str, locators: Iterable[str]) -> WebElement | None:
         '''Iterate an iterable structure and return the associated WebElement.
         
         If not found, then `None` is returned.
         '''
-        element = self.presence_find_element(iterators[0], by=by)
+        element = self.presence_find_element(locators[0], by=by)
 
         if element != None:
             try:
-                for i in iterators[1:]:
+                for i in locators[1:]:
                     element = element.find_element(by, i)
             except NoSuchElementException:
                 return None
