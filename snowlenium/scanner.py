@@ -30,7 +30,7 @@ class VTBScanner(Driver):
         ```
 
         '''
-        elements = self._traverse_elements(By.XPATH, locators[:-1])
+        elements = self._traverse_locators(By.XPATH, locators[:-1])
         
         if elements != None:
             elements = elements.find_elements(By.XPATH,
@@ -62,7 +62,7 @@ class VTBScanner(Driver):
         if len(locators) < 0:
             raise ValueError(f'Cannot have an empty iterable.')
         
-        element = self._traverse_elements(By.XPATH, locators[:-1])
+        element = self._traverse_locators(By.XPATH, locators[:-1])
 
         if element != None:
             try:
