@@ -7,19 +7,17 @@ from getpass import getpass
 import time
 
 class Login(Driver):
-    '''Class used to authenticate and start a session with ServiceNow. Inherits the `Driver` class.
-
-    If passing in values for the username and password, DO NOT use hard coded values. 
-    Instead use an `.env` file to retrieve sensitive data to pass.
-
-    Parameters
-    ----------
-        `username`: The username to login. Default is `None` which prompts a manual input if no value is passed.
-        
-        `password`: The password to login. Default is `None` which prompts a manual input if no value is passed. 
-        The input for `password` is hidden.
-    '''
+    '''Class used to authenticate and start a session with ServiceNow.'''
     def __init__(self, driver, *, username: str = None, password: str = None):
+        '''
+        Parameters
+        ----------
+        username: str
+            The username to login. Default is `None` which prompts a manual input if no value is passed.
+        
+        password: str
+            The password to login. Default is `None` which prompts a manual input if no value is passed. 
+            The input for `password` is hidden.'''
         super().__init__(driver)
         self.user = username if username is not None else input('Enter your username: ')
         self.pw = password if password is not None else getpass('Enter your password: ')
