@@ -6,8 +6,7 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 class VTBScanner(Driver):
     def __init__(self, driver):
-        '''Class used to scan for items on the Virtual Task Board (VTB) of Service Now.
-        '''
+        '''Class used to scan for items on the Virtual Task Board (VTB) of Service Now.'''
         super().__init__(driver)
     
     def get_elements(self, search_val: str, html_elements: list[str]) -> list[WebElement] | list:
