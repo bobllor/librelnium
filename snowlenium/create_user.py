@@ -16,10 +16,10 @@ class UserCreation(Driver):
         '''Fill the fields of the user on the user creaton page. The driver assumes it is
         already on the user creation page.
 
-        This method **does not** submit an entry. Invoke the `submit` method to submit an entry.
+        This method **does not** submit an entry, invoke the `submit` method instead.
         
-        Error handling on the user creation page is not checked here. 
-        Use the method `check_errors` to handle errors on the page.
+        Errors on the user creation page are not handled in this method. 
+        Use the method `check_errors` instead.
         
         Parameters
         ----------
@@ -33,15 +33,15 @@ class UserCreation(Driver):
                 A float used to delay each key insertion to the DOM element. By default it has
                 no delay.
         '''
+        # tup[0] is the value, tup[1] is the HTML value, tup[2] is the locator strategy. 
         for tup in values_info:
-            element: WebElement = self.presence_find_element(tup[1], by=tup[2])
-
-            if element is not None:
-                element.send_keys(tup[0])
+            element: WebElement = self.presence_find_element(tup[2], tup[1])
+            
+            element.send_keys(tup[0])
 
             time.sleep(sleep_time)
 
-    def submit(self, submit_dom: str, *, locator: str = 'id') -> None:
+    def submit(self, submit_element: str, *, locator: str = 'id') -> None:
         '''Submits the current entry on the user creation page.
         
         Parameters
@@ -53,25 +53,29 @@ class UserCreation(Driver):
             by: str
                 The locator used to find the element. By default it is By.ID.
         '''
-        submit_element = self.presence_find_element(submit_dom, by=locator)
+        submit_element: WebElement = self.presence_find_element(locator, submit_element)
 
         submit_element.click()
 
-    def check_errors(self, error_doms: list[str]) -> list[str]:
+    def check_errors(self, error_elements: list[tuple[str, str]]) -> list[str]:
         '''Checks the page for errors and return a list of strings representing
         the text of the error messages.
         
         Parameters
         ----------
-            error_doms: list[str]
-                A list of DOM elements that represents the errors.
+            error_html_elements: list[tuple[str, str]]
+                A list of tuples that contain (HTML_ELEMENT, LOCATOR) used to locate and extract
+                information from the errors in the DOM.
         '''
         errors = []
 
-        for dom in error_doms:
-            error_element: WebElement = self.presence_find_element(dom, By.CSS_SELECTOR)
+        for tup in error_elements:
+            # find_elements work better at the cost of readability and complexity
+            # up for debate to be honest. also the O(m * n) complexity. i probably have brain worms.
+            error_elements: list[WebElement] = self.driver.find_elements(tup[1], tup[0])
 
-            if error_element is not None:
-                errors.append(error_element.text)
+            if len(error_elements) > 0:
+                for element in error_elements:
+                    errors.append(element.text)
 
         return errors

@@ -70,9 +70,9 @@ class Login(Driver):
             if not isinstance(item, str):
                 raise TypeError(f'Expected {item}, got type {type(item)}')
 
-        self.presence_find_element(user, by=search_by).send_keys(self.user)
-        self.presence_find_element(pass_, by=search_by).send_keys(self.pw)
-        self.presence_find_element(button, by=search_by).click()
+        self.presence_find_element(search_by, user).send_keys(self.user)
+        self.presence_find_element(search_by, pass_).send_keys(self.pw)
+        self.presence_find_element(search_by, button).click()
 
         self.driver.switch_to.default_content()
 

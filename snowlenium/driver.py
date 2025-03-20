@@ -82,7 +82,7 @@ class Driver:
         '''Returns back to the default frame.'''
         self.driver.switch_to.default_content()
     
-    def navigate_shadow_root(self, *, by: str = By.CSS_SELECTOR, html_elements: Iterable[str] = None) -> ShadowRoot:
+    def navigate_shadow_root(self, locator: str = By.CSS_SELECTOR, *, html_elements: Iterable[str] = None) -> ShadowRoot:
         '''Returns a ShadowRoot of the last element in any iterable structure.
 
         Navigating a DOM with shadow roots is different from directly accessing a HTML element.
@@ -106,51 +106,44 @@ class Driver:
         if len(html_elements) < 1:
             raise ValueError(f'Cannot have an empty iterable, got {len(html_elements)} size')
         
-        sr = self.driver.find_element(by, html_elements[0]).shadow_root
+        sr = self.driver.find_element(locator, html_elements[0]).shadow_root
         
         if len(html_elements) > 1:
             for s_root in html_elements[1:]:
-                sr = sr.find_element(by, s_root).shadow_root
+                sr = sr.find_element(locator, s_root).shadow_root
 
         return sr
             
-    def presence_find_element(self, value: str = None, *, by=By.ID) -> WebElement | None:
+    def presence_find_element(self, locator=By.ID, value: str = None) -> WebElement:
         '''Return a `WebElement` by using an expected condition and `WebDriverWait`. 
-        If no element is found, return `None`.
+        If no element is found, a `TimeoutException` exception is raised.
         
         Parameters
         ----------
-            value: str
-                The attribute of a HTML element. This can be any `str` value that matches the locator strategy.
-           
             by: str
                 Locator strategy, can use the literal string equivalent or the By strategy. 
                 By default it locates by `id`.
+
+            value: str
+                The attribute of a HTML element. This can be any `str` value that matches the locator strategy.
         '''
-        if by is None or value is None:
+        if locator is None or value is None:
             raise TypeError
 
-        try:
-            ele = self.driver_wait.until(EC.presence_of_element_located(
-                (by, value)
-            ))
-        except TimeoutException:
-            return None
+        ele = self.driver_wait.until(EC.presence_of_element_located(
+            (locator, value)
+        ))
         
         return ele
     
-    def _traverse_locators(self, by: str, locators: Iterable[str]) -> WebElement | None:
+    def _traverse_html_elements(self, locator: str, html_elements: Iterable[str]) -> WebElement:
         '''Iterate an iterable structure and return the associated WebElement.
         
-        If not found, then `None` is returned.
+        If not found, a `NoSuchElementException` exception is raised.
         '''
-        element = self.presence_find_element(locators[0], by=by)
+        element = self.presence_find_element(locator, value=html_elements[0])
 
-        if element != None:
-            try:
-                for i in locators[1:]:
-                    element = element.find_element(by, i)
-            except NoSuchElementException:
-                return None
+        for i in html_elements[1:]:
+            element = element.find_element(locator, i)
         
         return element
