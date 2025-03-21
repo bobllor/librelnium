@@ -22,7 +22,7 @@ class Login(Driver):
         self.user = username if username is not None else input('Enter your username: ')
         self.pw = password if password is not None else getpass('Enter your password: ')
     
-    def login(self, url: str = None, 
+    def login(self,
               *, 
               has_frame: bool = True,
               search_by: str = 'id',
@@ -31,9 +31,6 @@ class Login(Driver):
 
         Parameters
         ----------
-            url: str 
-                Accepts a `str` and uses the driver to navigate to the given link. By default it is `None`.
-
             has_frame: bool
                 A `bool` used to indicate that there is a frame to switch to on the page. By default it is `True`.
 
@@ -47,9 +44,6 @@ class Login(Driver):
                 HTML login field elements that allows the driver to interact with the login. By default, it has
                 default values of element IDs.
         '''
-        if url is not None:
-            self.driver.get(url)
-
         if login_val is None:
             login_val = {
                 'user_id': 'user_name',
