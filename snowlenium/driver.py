@@ -5,6 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.remote.shadowroot import ShadowRoot
 from selenium.common.exceptions import TimeoutException, NoSuchFrameException, NoSuchElementException
+from selenium.webdriver.common.action_chains import ActionChains
 from typing import Iterable
 import selenium.webdriver.chrome.webdriver as chrome
 import selenium.webdriver.firefox.webdriver as firefox
@@ -37,6 +38,7 @@ class Driver:
         
         self.wait_time = 6
         self.driver_wait = WebDriverWait(self.driver, self.wait_time)
+        self.action_driver = ActionChains(self.driver)
         
     def set_wait_timer(self, value: int = 6) -> None:
         '''Sets the wait timer for `WebDriverWait` to a given value. By default it is 6 seconds.'''
