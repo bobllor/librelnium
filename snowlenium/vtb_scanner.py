@@ -3,6 +3,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+import time
 
 class VTBScanner(Driver):
     def __init__(self, driver):
@@ -57,7 +58,9 @@ class VTBScanner(Driver):
             
         return element
 
-    def drag_task(self, search_val: str = None, web_element: WebElement = None, *, drag_to: str):
+    def drag_task(self, search_val: str = None, web_element: WebElement = None, *, 
+                  locator: str = By.XPATH,
+                  drag_to: str):
         '''Drags the task over to a desired swim lane on the VTB.
         
         Parameters
@@ -76,48 +79,19 @@ class VTBScanner(Driver):
         if search_val is None and web_element is None:
             raise ValueError(f'Expected a value for search_val or web_element')
         
-        element = self.get_element(search_val)
+        if search_val is not None:
+            element = self.get_element(search_val)
         
+        if web_element is not None:
+            element = web_element
+
+        drag_to_element = self.presence_find_element(locator, drag_to)
         
+        self.action_driver.click_and_hold(element).pause(.3)
 
+        # the pause is necessary to wait for JS to update the new card location.
+        self.action_driver.move_to_element(drag_to_element).release(drag_to_element).pause(.8)
+        self.action_driver.perform()
 
-    '''def drag_task(self, element, *, is_inc: bool = False):
-        self.__switch_frames()
-
-        lane_path = '//li[@v-lane-index="1" and @h-lane-index="0"]' if is_inc is False else '//li[@v-lane-index="2" and @h-lane-index="0"]'
-        try:
-            lane = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, lane_path)))
-        except TimeoutException:
-            return
-        
-
-        # selects the parent of the element (div). prevents: 1. clicking on the href & 2. having a javascript no size error.
-        element = element.find_element(By.XPATH, '..')
-
-        try:
-            action = ActionChains(self.driver)
-
-            action.click_and_hold(element)
-
-            time.sleep(1)
-
-            action.move_to_element(lane)
-
-            time.sleep(1)
-
-            action.release(lane).perform()
-
-            print('   Task dragged.')
-        except StaleElementReferenceException:
-            # hopefully this doesn't bite me back in the ass.
-            pass
-        except JavascriptException:
-            # used to handle elements that are not in scroll view. should happen very rarely.
-            body_element = self.driver.find_element(By.CSS_SELECTOR, 'body')
-            body_element.click()
-            body_element.send_keys(Keys.PAGE_DOWN)
-
-            self.drag_task(element)
-        
-        self.driver.switch_to.default_content()'''
+        # TODO: javascriptexception fix by scrolling down on the page with the driver.
+        # it occurs due to the element being hidden by the overflow content
