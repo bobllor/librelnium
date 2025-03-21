@@ -13,8 +13,7 @@ class FormFiller(Driver):
         super().__init__(driver)
     
     def fill_fields(self, *, values_info: list[tuple[str, str, str]], sleep_time: float = 0) -> None:
-        '''Fill the fields of the user on the user creaton page. The driver assumes it is
-        already on the user creation page.
+        '''Fill the fields of a given page. The driver assumes it is already on the page.
 
         This method **does not** submit an entry, invoke the `submit` method instead.
         
