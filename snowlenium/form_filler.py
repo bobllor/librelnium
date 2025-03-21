@@ -1,10 +1,7 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, NoSuchFrameException
-from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support import expected_conditions as EC
 from .driver import Driver
 import time
 
@@ -23,10 +20,10 @@ class FormFiller(Driver):
         Parameters
         ----------
             values_info: list[tuple[str, str, str]]
-                A list of tuples that are in order of (VALUE, DOM_ELEMENT, LOCATOR) where the
-                VALUE will be inserted into the DOM_ELEMENT by searching the LOCATOR.
+                A list of tuples that are in order of (VALUE, HTML_ELEMENT, LOCATOR) where the
+                VALUE will be inserted into the HTML_ELEMENT by searching the LOCATOR.
                 For example: ('USER_EMAIL', 'user.email', By.ID), will insert
-                'USER_EMAIL' at the DOM element with the ID 'user.email'.
+                'USER_EMAIL' at the HTML element with the ID 'user.email'.
 
             sleep_time: float
                 A float used to delay each key insertion to the DOM element. By default it has
@@ -41,12 +38,12 @@ class FormFiller(Driver):
             time.sleep(sleep_time)
 
     def submit(self, submit_element: str, *, locator: str = 'id') -> None:
-        '''Submits the current entry on the user creation page.
+        '''Presses the submit button on the form entry page.
         
         Parameters
         ----------
-            submit_dom: str
-                The DOM of the element that represents the save/submit button to
+            submit_element: str
+                The HTML of the element that represents the save/submit button to
                 insert the user into the database.
 
             by: str
