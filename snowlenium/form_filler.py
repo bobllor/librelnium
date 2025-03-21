@@ -8,7 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from .driver import Driver
 import time
 
-class UserCreation(Driver):
+class FormFiller(Driver):
     def __init__(self, driver):
         super().__init__(driver)
     
