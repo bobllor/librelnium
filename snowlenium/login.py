@@ -1,72 +1,82 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from .driver import Driver
 from getpass import getpass
 
 import time
 
 class Login(Driver):
-    '''Class used to authenticate and start a session with ServiceNow.'''
-    def __init__(self, driver, *, username: str = None, password: str = None):
-        '''
+    def __init__(self, driver):
+        '''Class used to login.
         Parameters
         ----------
-        username: str
-            The username to login. Default is `None` which prompts a manual input if no value is passed.
-        
-        password: str
-            The password to login. Default is `None` which prompts a manual input if no value is passed. 
-            The input for `password` is hidden.'''
+            driver: WebDriver
+                Any WebDriver.
+        '''
         super().__init__(driver)
-        self.user = username if username is not None else input('Enter your username: ')
-        self.pw = password if password is not None else getpass('Enter your password: ')
     
     def login(self,
+              login_elements: dict[str, tuple[str, str]],
+              username: str = None,
+              password: str = None,
               *, 
-              has_frame: bool = True,
-              search_by: str = 'id',
-              login_val: dict[str, str] = None):
-        '''Login into ServiceNow.
-
+              frame: str = None,
+              sleep_time: float | int = 0):
+        '''
         Parameters
         ----------
-            has_frame: bool
-                A `bool` used to indicate that there is a frame to switch to on the page. By default it is `True`.
+            login_elements: dict[str, tuple[str, str]
+                A dictionary containing three keys: `user_element`, `password_element`, `login_element`, 
+                with each having values of tuples of strings in the order of (HTML_ELEMENT, LOCATOR).
 
-            search_by: str
-                Used to indicate what to search the element by. By default it searches by element `id`.
-                Valid options `id`, `xpath`, `link text`, `partial link text`, `name`, `tag name`,
-                `class name`, and `css selector`.
+            username: str
+                Default is `None` which prompts a manual input if no value is passed.
+        
+            password: str
+                Default is `None` which prompts a manual input if no value is passed. 
+                The input for `password` is hidden.
 
-            login_val: dict
-                A dictionary containing three keys: `user_id`, `password_id`, `login_button`, which are the
-                HTML login field elements that allows the driver to interact with the login. By default, it has
-                default values of element IDs.
+            frame: str
+                If a value is given, the driver will switch to the frame.
+
+            sleep_time: int | float
+                A timer used to delay the driver after a login. Useful if there is a delay after
+                logging in. By default it has no delay.
         '''
-        if login_val is None:
-            login_val = {
-                'user_id': 'user_name',
-                'password_id': 'user_password',
-                'login_button': 'sysverb_login'
-            }
+        if not all(isinstance(k, str) for k in login_elements.keys()):
+            raise TypeError('Expected str for keys in dictionary')
+        
+        login_info = {}
 
-        if has_frame is True:
-            self.switch_frames()
+        if username is None:
+            login_info['user'] = input('Enter your username: ')
+        if password is None:
+            login_info['pass'] = getpass('Enter your password: ')
 
-        user = login_val.get('user_id')
-        pass_ = login_val.get('password_id')
-        button = login_val.get('login_button')
+        if frame is not None:
+            self.switch_frames(frame)
+        
+        # [0] indicates the type of value, [1] is the key of the login_elements
+        login_values = [('user', 'user_element'), 
+                      ('pass', 'password_element'), 
+                      ('login', 'login_element')]
 
-        for item in [user, pass_, button]:
-            if not isinstance(item, str):
-                raise TypeError(f'Expected {item}, got type {type(item)}')
+        for key in login_values:
+            type_ = key[0]
+            value = login_elements.get(key[-1])
 
-        self.presence_find_element(search_by, user).send_keys(self.user)
-        self.presence_find_element(search_by, pass_).send_keys(self.pw)
-        self.presence_find_element(search_by, button).click()
+            if value is None:
+                raise KeyError(f'Expected key {key} but got None')
+            
+            html_element = value[0]
+            locator = value[-1]
 
-        self.driver.switch_to.default_content()
+            web_element = self.presence_find_element(locator, html_element)
 
-        # wait required due to load times for SNOW.
-        time.sleep(8)
+            if type_ != 'login':
+                web_element.send_keys(login_info.get(type_))
+            else:
+                web_element.click()
+
+        self.switch_default_frame()
+
+        # in case there is a page loading delay
+        time.sleep(sleep_time)
