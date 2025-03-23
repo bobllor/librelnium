@@ -1,9 +1,7 @@
 from .driver import Driver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
-import time
+from selenium.common.exceptions import TimeoutException
 
 class VTBScanner(Driver):
     def __init__(self, driver):
@@ -59,7 +57,7 @@ class VTBScanner(Driver):
         return element
 
     def drag_task(self, search_val: str = None, web_element: WebElement = None, *, 
-                  locator: str = By.XPATH,
+                  locator: str | By = By.XPATH,
                   drag_to: str):
         '''Drags the task over to a desired swim lane on the VTB.
         
@@ -81,7 +79,6 @@ class VTBScanner(Driver):
         
         if search_val is not None:
             element = self.get_element(search_val)
-        
         if web_element is not None:
             element = web_element
 
