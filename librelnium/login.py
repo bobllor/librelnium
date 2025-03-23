@@ -64,7 +64,7 @@ class Login(Driver):
             value = login_elements.get(key[-1])
 
             if value is None:
-                raise KeyError(f'Expected key {key} but got None')
+                raise KeyError(f'Expected key {key[-1]} but got None')
             
             html_element = value[0]
             locator = value[-1]
