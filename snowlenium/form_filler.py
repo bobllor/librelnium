@@ -1,6 +1,4 @@
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException, TimeoutException, NoSuchFrameException
 from selenium.webdriver.remote.webelement import WebElement
 from .driver import Driver
 import time
@@ -9,7 +7,7 @@ class FormFiller(Driver):
     def __init__(self, driver):
         super().__init__(driver)
     
-    def fill_fields(self, *, values_info: list[tuple[str, str, str]], sleep_time: float = 0) -> None:
+    def fill_fields(self, values_info: list[tuple[str, str, str]], *, sleep_time: float | int = 0) -> None:
         '''Fill the fields of a given page. The driver assumes it is already on the page.
 
         This method **does not** submit an entry, invoke the `submit` method instead.
@@ -25,8 +23,8 @@ class FormFiller(Driver):
                 For example: ('USER_EMAIL', 'user.email', By.ID), will insert
                 'USER_EMAIL' at the HTML element with the ID 'user.email'.
 
-            sleep_time: float
-                A float used to delay each key insertion to the DOM element. By default it has
+            sleep_time: float | int
+                Time used to delay each key insertion to the DOM element. By default it has
                 no delay.
         '''
         # tup[0] is the value, tup[1] is the HTML value, tup[2] is the locator strategy. 
@@ -37,7 +35,7 @@ class FormFiller(Driver):
 
             time.sleep(sleep_time)
 
-    def submit(self, submit_element: str, *, locator: str = 'id') -> None:
+    def submit(self, submit_element: str, *, locator: str | By = By.ID) -> None:
         '''Presses the submit button on the form entry page.
         
         Parameters
@@ -46,7 +44,7 @@ class FormFiller(Driver):
                 The HTML of the element that represents the save/submit button to
                 insert the user into the database.
 
-            by: str
+            by: str | By
                 The locator used to find the element. By default it is By.ID.
         '''
         submit_element: WebElement = self.presence_find_element(locator, submit_element)
