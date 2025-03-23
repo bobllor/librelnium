@@ -16,7 +16,7 @@ class Driver:
         '''
         Parameters
         ----------
-            driver_type: str
+            driver_type: WebDriver
                 A string representating a `WebDriver`. By default, it uses the chrome `WebDriver`.
                 Valid options are `['chrome', 'firefox', 'edge']`.
             
