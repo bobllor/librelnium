@@ -8,21 +8,22 @@ from selenium.common.exceptions import TimeoutException, NoSuchFrameException
 from selenium.webdriver.common.action_chains import ActionChains
 import selenium.webdriver.chrome.webdriver as chrome
 import selenium.webdriver.firefox.webdriver as firefox
+import selenium.webdriver.edge.webdriver as edge
 from selenium.webdriver.chrome.options import Options as chromeOptions
 
 class Driver:
     '''Base class for WebDriver related navigation and methods.'''
-    def __init__(self, driver: WebDriver = None, option_args: list[str] = None):
+    def __init__(self, driver: str | WebDriver = None, option_args: list[str] = None):
         '''
         Parameters
         ----------
-            driver_type: WebDriver
-                A string representating a `WebDriver`. By default, it uses the chrome `WebDriver`.
-                Valid options are `['chrome', 'firefox', 'edge']`.
+            driver: str | WebDriver
+                A string representing a WebDriver type or a `WebDriver` object. 
+                If nothing is passed, it defaults to the `chrome.WebDriver`.
+                Valid strings are `['chrome', 'firefox', 'edge']`.
             
             options: list[str]
                 A list of strings that contain arguments to add into the options for the driver.
-                By default, logging is disabled for the Chrome webdriver if `None`.
         '''
         if option_args is not None and not any(isinstance(option, str) for option in option_args):
             raise TypeError('Got unexpected type in option_args.')
@@ -32,8 +33,15 @@ class Driver:
             options.add_argument('--log-level=3')
             options.add_experimental_option('excludeSwitches', ['enable-logging'])
             options.add_argument('--disable-logging')
-
-        self.driver: WebDriver = driver if driver is not None else chrome.WebDriver(options=options)
+        
+        if driver == 'chrome' or driver is None:
+            driver = chrome.WebDriver(options=options)
+        elif driver == 'firefox':
+            driver = firefox.WebDriver()
+        elif driver == 'edge':
+            driver = edge.WebDriver()
+        
+        self.driver = driver
         
         self.wait_time = 6
         self.driver_wait = WebDriverWait(self.driver, self.wait_time)
