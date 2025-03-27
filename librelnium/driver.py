@@ -10,6 +10,8 @@ import selenium.webdriver.chrome.webdriver as chrome
 import selenium.webdriver.firefox.webdriver as firefox
 import selenium.webdriver.edge.webdriver as edge
 from selenium.webdriver.chrome.options import Options as chromeOptions
+from typing import Any
+import time
 
 class Driver:
     '''Base class for WebDriver related navigation and methods.'''
@@ -174,6 +176,28 @@ class Driver:
         If none found, then an empty list is returned.'''
         return self.driver.find_elements(locator, value)
     
+    def scroll_to_element(self, element: WebElement):
+        '''Scroll to a web element on the page.'''
+        self._inject_script('scroll-utils/find-scrollable-element.js')
+
+        val = self._execute_js('const func = findScrollableElement(); return func("overflow-y");')
+        
+        self._execute_js('arguments[0].scrollBy(0, 300)', val)
+
+    def _inject_script(self, script_name: str):
+        '''Inject a script into the current window.
+        
+        A script must be using the Window API in order to keep it persistent in the window.
+        '''
+        # default location for scripts
+        builder = ['librelnium/js_scripts/', script_name]
+
+        with open(''.join(builder), 'r') as file:
+            # maybe parse out comments? probably not needed in the long run.
+            script = file.read()
+
+        self._execute_js(script)
+        
     def _traverse_html_elements(self, locator: str | By, html_elements: list[str]) -> WebElement:
         '''Iterate through a list and return the associated WebElement.
     
@@ -185,3 +209,7 @@ class Driver:
             element = element.find_element(locator, i)
         
         return element
+    
+    def _execute_js(self, js: str, args: Any = None) -> WebElement:
+        '''Execute JavaScript in the current window.'''
+        return self.driver.execute_script(js, args)
