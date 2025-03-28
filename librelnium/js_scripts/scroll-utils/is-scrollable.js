@@ -1,11 +1,7 @@
-window.isScrollable = () => {
-    let element = document.querySelector('body');
+window.isScrollable = (element = null) => {
+    let elt = element != null ? element : document.body;
 
-    let overflowValue = window.getComputedStyle(element).getPropertyValue('overflow');
+    let overflowValue = window.getComputedStyle(elt).getPropertyValue('overflow');
 
-    if(overflowValue != 'hidden'){
-        return true;
-    }
-
-    return false;
+    return overflowValue != 'hidden' ? true : false;
 }
