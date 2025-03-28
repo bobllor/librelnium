@@ -43,5 +43,5 @@ html_elements = [main_container, './/tr[1]', './/input[1]']
 
 scraper = Scraper(driver.driver)
 
-element_data = scraper.get_element_attribute('xpath', first_selector, attribute='value')
+element_data = scraper.get_element_attribute('xpath', html_elements, attribute='value')
 ```
