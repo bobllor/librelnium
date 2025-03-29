@@ -176,16 +176,106 @@ class Driver:
         If none found, then an empty list is returned.'''
         return self.driver.find_elements(locator, value)
     
-    def scroll_to_element(self, element: WebElement):
-        '''Scroll to a web element on the page.'''
-        self._inject_script('scroll-utils/find-scrollable-element.js')
+    def scroll_to_element(self, web_element: WebElement, *,
+                          main_scroll_element: str = None,
+                          tags_to_scroll: list[str] = None,
+                          css_properties: list[str] = None,
+                          loop_limit: int = 20
+                          ):
+        '''Scroll to a web element on the page.
 
-        val = self._execute_js('const func = findScrollableElement(); return func("overflow-y");')
+        If a web element is not visible, then this method will invoke JavaScript functions to scroll 
+        to the element automatically. If found, the driver is positioned in a way where the element
+        is interactable.
         
-        self._execute_js('arguments[0].scrollBy(0, 300)', val)
+        Parameters
+        ----------
+            web_element: WebElement
+                The Web Element on the given page.
+
+            main_scroll_element: str
+                The main container that is enables scrolling on a page. This is used if the `web_element`
+                is not visible on the page. This is used as an argument for a JavaScript function,
+                which returns a `boolean` if the main page is scrollable. Primarily used to check 
+                if a custom container is present. 
+                By default, it is None. The default target is the document `body`.
+
+            tags_to_scroll: list[str]
+                A list of element tags that represents the scrollable container. It must **contain**
+                at most two elmeents.
+                A JavaScript function is executed that returns a scrollable element. If used,
+                it expects the `css_properties` argument to also be used.
+                By default, it is None. It defaults to search all `div` elements on a page.
+
+            css_properties: list[str]
+                A list of CSS properties that can be found on a scrollable element. It must **contain**
+                at most two elements, if `tags_to_scroll` is used.
+                These properties look for the values 'auto' and 'scroll' for the property.
+                By default, it is None. It defaults to search for the `overflow` property on an element.
+
+            loop_limit: int
+                A number representing the maximum loop count in a JavaScript function. This is used
+                only if the `web_element` is not visible.
+        '''
+        # check if element is visible first
+        element_visible: bool = self._execute_js('return arguments[0].checkVisibility();', web_element)
+
+        if element_visible is False:
+            self._inject_script('scroll-utils/is-scrollable.js')
+            
+             # the body is scrollable, e.g. the scroll is normal for a page.
+            is_scrollable: bool = self._execute_js('return isScrollable();', main_scroll_element)
+
+            if is_scrollable is False:
+                self._inject_script('scroll-utils/find-scrollable-element.js')
+                self._inject_script('scroll-utils/scroll-until-found.js')
+                
+                if tags_to_scroll is None or len(tags_to_scroll) == 0:
+                    tags_to_scroll = ['div']
+
+                if css_properties is None:
+                    css_properties = ['overflow' for _ in range(len(tags_to_scroll))]
+
+                scroll_elements = []
+
+                for i, tag in enumerate(tags_to_scroll):
+                    # parameters: elementTag, property
+                    scroll = self._execute_js(
+                        'return findScrollableElement(arguments[0], arguments[1])',
+                        tag,
+                        css_properties[i]
+                    )
+
+                    scroll_elements.append(scroll)
+
+                # the next JS function expects a value or null as an argument, if the list is 1
+                # then append None to the list.
+                if len(scroll_elements) != 2:
+                    scroll_elements.append(None)
+                
+                # parameters: scrollOne, scrollTwo, webElement, loopLimit
+                self._execute_js(
+                    'scrollUntilFound(arguments[0], arguments[1], arguments[2], arguments[3]);',
+                    *scroll_elements,
+                    web_element,
+                    loop_limit
+                )
+                
+                # loop used to ensure the JS function above completes.
+                for i in range(loop_limit + 3):
+                    if i % 3 == 0:
+                        element_found: bool = web_element.is_displayed()
+                    
+                    if element_found:
+                        break
+                    
+                    time.sleep(.5)
+
+        self._execute_js('arguments[0].scrollIntoView()', web_element)
 
     def _inject_script(self, script_name: str):
-        '''Inject a script into the current window.
+        '''Inject a script into the current window. The path is automatically pointed to the `js_scripts`
+        directory, the script_name is the directory and file name.
         
         A script must be using the Window API in order to keep it persistent in the window.
         '''
@@ -210,6 +300,6 @@ class Driver:
         
         return element
     
-    def _execute_js(self, js: str, args: Any = None) -> WebElement:
+    def _execute_js(self, js: str, *args: Any) -> WebElement:
         '''Execute JavaScript in the current window.'''
-        return self.driver.execute_script(js, args)
+        return self.driver.execute_script(js, *args)
