@@ -37,9 +37,7 @@ class Scanner(Driver):
             elements = parent_element.find_elements(By.XPATH,
             f'{last_element}[contains(text(), "{search_val}")]')
         else:
-            parent_element = self.presence_find_element(By.XPATH, html_elements[-1])
-
-            elements = self.find_elements(By.XPATH, f'.//*[contains(text(), "{search_val}")]')
+            elements = self.find_elements(By.XPATH, f'{last_element}[contains(text(), "{search_val}")]')
         
         return elements
     
