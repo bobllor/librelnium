@@ -27,11 +27,11 @@ window.scrollUntilFound = (scrollOne = null, scrollTwo = null, webElement, loopL
         }
 
         if(scrollOne != null){
-            scrollOne.scrollBy(0, 100);
+            scrollOne.scrollBy(100, 100);
         }
 
         if(scrollTwo != null){
-            scrollTwo.scrollBy(100, 0);
+            scrollTwo.scrollBy(100, 100);
         }
  
         count++;
