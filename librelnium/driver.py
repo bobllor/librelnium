@@ -194,28 +194,28 @@ class Driver:
                 The Web Element on the given page.
 
             main_scroll_element: str
-                The main container that is enables scrolling on a page. This is used if the `web_element`
+                The main container that enables scrolling on a page. This is used if the `web_element`
                 is not visible on the page. This is used as an argument for a JavaScript function,
                 which returns a `boolean` if the main page is scrollable. Primarily used to check 
                 if a custom container is present. 
                 By default, it is None. The default target is the document `body`.
 
             tags_to_scroll: list[str]
-                A list of element tags that represents the scrollable container. It must **contain**
-                at most two elmeents.
-                A JavaScript function is executed that returns a scrollable element. If used,
-                it expects the `css_properties` argument to also be used.
+                A list of element tags that represents the scrollable container.
+                At most it can only contain two elements.
+                A JavaScript function is executed that returns a scrollable element.
                 By default, it is None. It defaults to search all `div` elements on a page.
 
             css_properties: list[str]
-                A list of CSS properties that can be found on a scrollable element. It must **contain**
-                at most two elements, if `tags_to_scroll` is used.
-                These properties look for the values 'auto' and 'scroll' for the property.
+                A list of CSS properties that can be found on an element.
+                At most it can only contain two elements.
+                These JavaScript function looks for the values 'auto' and 'scroll' for the property.
                 By default, it is None. It defaults to search for the `overflow` property on an element.
 
             loop_limit: int
                 A number representing the maximum loop count in a JavaScript function. This is used
                 only if the `web_element` is not visible.
+                By default it loops 20 times.
         '''
         # check if element is visible first
         element_visible: bool = self._execute_js('return arguments[0].checkVisibility();', web_element)
