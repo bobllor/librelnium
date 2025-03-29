@@ -1,16 +1,16 @@
-window.scrollUntilFound = (scrollY = null, scrollX = null, webElement, limit = 15) => {
+window.scrollUntilFound = (scrollOne = null, scrollTwo = null, webElement, loopLimit = 15) => {
     const throwTypeError = (message) => {throw new TypeError(message)}
     
-    if(scrollY === null && scrollX === null){
-        throwTypeError('Must pass an Element to either scrollY or scrollX.')
+    if(scrollOne === null && scrollTwo === null){
+        throwTypeError('Must pass an Element to either scrollOne or scrollTwo.')
     }
 
-    if(scrollY != null && scrollY.nodeType != 1){
-        throwTypeError(`Expected scrollY to be a Element node or null, got ${typeof scrollY}`)
+    if(scrollOne != null && scrollOne.nodeType != 1){
+        throwTypeError(`Expected scrollOne to be a Element node or null, got ${typeof scrollOne}`)
     }
 
-    if(scrollX != null && scrollX.nodeType != 1){
-        throwTypeError(`Expected scrollX to be a Element node or null, got ${typeof scrollX}`)
+    if(scrollTwo != null && scrollTwo.nodeType != 1){
+        throwTypeError(`Expected scrollTwo to be a Element node or null, got ${typeof scrollTwo}`)
     }
 
     if(webElement.nodeType != 1){
@@ -22,20 +22,16 @@ window.scrollUntilFound = (scrollY = null, scrollX = null, webElement, limit = 1
     let id = setInterval(() => {
         let elementVisibility = webElement.checkVisibility();
 
-        if(count === limit || elementVisibility === true){
-            if(elementVisibility === true){
-                console.log('found');
-            }
-            
+        if(count === loopLimit || elementVisibility === true){            
             clearInterval(id);
         }
 
-        if(scrollY != null){
-            scrollY.scrollBy(0, 100);
+        if(scrollOne != null){
+            scrollOne.scrollBy(0, 100);
         }
 
-        if(scrollX != null){
-            scrollX.scrollBy(100, 0);
+        if(scrollTwo != null){
+            scrollTwo.scrollBy(100, 0);
         }
  
         count++;
