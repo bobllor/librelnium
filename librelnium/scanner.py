@@ -5,7 +5,7 @@ from selenium.common.exceptions import TimeoutException
 
 class Scanner(Driver):
     def __init__(self, driver):
-        '''Class used to scan for items on the Virtual Task Board (VTB) of Service Now.'''
+        '''Class used to scan for elements on a page..'''
         super().__init__(driver)
     
     def get_elements(self, search_val: str, html_elements: list[str]) -> list[WebElement] | list:
@@ -13,7 +13,7 @@ class Scanner(Driver):
 
         Searches for the elements based on the value of `search_val`, and returns WebElements that contains
         `search_val`. It uses the XML function `contains()` to get the result.
-        If attempting to find elements in a certain swim lane, the final xpath in the list **must be a relative path**.
+        If attempting to find nested elements, the final xpath in the list **must be a relative path**.
         Absolute paths will ignore the hierarchy of the DOM and will attempt to search for all matching tags.
         
         Parameters
@@ -23,13 +23,23 @@ class Scanner(Driver):
                 this method searches elements that contain the text value.
 
             html_elements: list[str]
-                A list of HTML elements that matches the last element in the list. 
+                A list of HTML elements that are the parents to the last element in the list.
                 This must be in a format of an **XPATH**.
         '''
-        elements = self._traverse_html_elements(By.XPATH, html_elements[:-1])
-        
-        elements = elements.find_elements(By.XPATH,
-            f'{html_elements[-1]}[contains(text(), "{search_val}")]')
+        if len(html_elements) == 0:
+            raise ValueError('Cannot have an empty list for html_elements')
+
+        # ignore the last element in the list, it is where the search is performed.
+        if len(html_elements) > 1:
+            last_element = html_elements.pop()
+            parent_element = self._traverse_html_elements(By.XPATH, html_elements)
+
+            elements = parent_element.find_elements(By.XPATH,
+            f'{last_element}[contains(text(), "{search_val}")]')
+        else:
+            parent_element = self.presence_find_element(By.XPATH, html_elements[-1])
+
+            elements = self.find_elements(By.XPATH, f'.//*[contains(text(), "{search_val}")]')
         
         return elements
     
