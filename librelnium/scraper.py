@@ -47,12 +47,22 @@ class Scraper(Driver):
                      ) -> list[WebElement]:
         '''Returns a list of WebElements based on the last locator in the list.
         
-        If multiple locators are given, then the method will assume the last locator is the target
-        and will navigate each item in the list before returning the list of elements of the target.
+        If multiple locators are given, then the method will assume the last locator is the TARGET
+        and will navigate each item where the list of elements matching the TARGET is returned by
+        searching the second to last locator.
 
         Parameters
         ----------
-
+            locators: list[tuple[str,str] | str]
+                A list of locators, consisting of either:
+                    1. A tuple consisting of two strings, `[STRATEGY, LOCATOR]`. The `STRATEGY` represents
+                    the locator strategy (By.XPATH, 'xpath') and `LOCATOR` represents the locator string
+                    (e.g. '//div[@id="some-id-here"]').
+                    2. A string representing a locator. If used, the method will use the previous
+                    strategy specified from a tuple.
+                
+                The first element in `locators` **must be a tuple**, while each subsequent element can
+                be a tuple (with a new strategy) or a string.
         '''
         if not isinstance(locators[0], tuple):
             raise ValueError(f'The first element in locators must be a type tuple consisting of [strategy, locator]')
