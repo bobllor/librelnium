@@ -303,3 +303,7 @@ class Driver:
     def _execute_js(self, js: str, *args: Any) -> WebElement:
         '''Execute JavaScript in the current window.'''
         return self.driver.execute_script(js, *args)
+    
+    def quit(self):
+        '''Terminate the session.'''
+        self.driver.quit()
