@@ -161,7 +161,7 @@ class Scraper(Driver):
         This method **assumes** that the element is always interactable. If an element is
         hidden by overflow or is not displayed to the driver, call the `scroll_to_element` method 
         to get to the element before calling this method. If an element is not interactable, 
-        a `ElementNotInteractableException` or a `JavascriptException` exceptions are raised.
+        `ElementNotInteractableException` or `JavascriptException` exceptions are raised.
 
         Parameters
         ----------
