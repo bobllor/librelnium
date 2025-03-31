@@ -69,31 +69,31 @@ class Scraper(Driver):
         
         first_locator = locators.pop(0)
 
+        if not all([isinstance(item, str) for item in first_locator]):
+            raise TypeError(f'Got unexpected type in the first element of locators, expected [str, str]')
+
         strategy = first_locator[0]
         locator = first_locator[1]
 
         if len(locators) > 0:
             last_locator = locators.pop()
-            traversed_element = self.presence_find_element(first_locator[0], first_locator[1])
 
-            for element in locators:
-                if isinstance(element, tuple):
-                    strategy = element[0]
-                    locator = element[1]
-                elif isinstance(element, str):
-                    locator = element
-                else:
-                    raise TypeError(f'Expected {element} to be type str or tuple, got {type(element)}')
-                
-                traversed_element = traversed_element(strategy, locator)
-
+            # returns a strategy and locator.
+            traversal_data = self._traverse_locators(strategy, locator, locators)
+            
+            # tuple means a new selector -> replace old selector
             if isinstance(last_locator, tuple):
                 strategy = last_locator[0]
                 locator = last_locator[1]
             else:
+                # traversal_data can either be the original strategy or a new one, depending
+                # on the values inside the locators list.
+                strategy = traversal_data[0]
                 locator = last_locator
+            
+            element = traversal_data[1]
 
-            return traversed_element.find_elements(strategy, locator)
+            return element.find_elements(strategy, locator)
             
         return self.find_elements(strategy, locator)
     
@@ -192,3 +192,55 @@ class Scraper(Driver):
 
         # TODO: javascriptexception fix by scrolling down on the page with the driver.
         # it occurs due to the element being hidden by the overflow content
+
+    def _traverse_locators(self,
+                        strategy: str, 
+                        locator: str,
+                        locators: list[tuple[str, str] | str]) -> tuple[str, WebElement]:
+        '''Traverses a list of locators and return a tuple consisting of a strategy 
+        locator and a WebElement.
+        
+        Note: Before calling this method, ensure that the **last locator is popped** from the list
+        of locators. This method traverses and returns a WebElement of the second-to-last locator 
+        of the original list.
+
+        If an empty list is given, then it returns the WebElement of the given strategy and locator
+        instead (which are the values of the first tuple).
+
+        Parameters
+        ----------
+            strategy: str
+                The strategy locator of the first tuple.
+
+            locator: str
+                The locator of the first tuple.
+
+            locators: list[tuple[str, str] | str]
+                A list of locators (tuples of strategy/locator or strings) that are used
+                for traversal.
+
+        Return
+        ----------
+            tuple[str | None, WebElement]
+                A tuple containing:
+                    1. A string representing the locator strategy. This will be the first
+                    tuple strategy or a strategy of from the tuple in the locator list. This will be
+                    overwritten in the calling method if the last locator is a tuple.
+                    2. The WebElement of the **second-to-last locator** in the original list of locators.
+                    The locator is the one before the last locator is poped.
+        '''
+        traversed_element = self.presence_find_element(strategy, locator)
+
+        if len(locators) > 0:
+            for item in locators:
+                if isinstance(item, tuple):
+                    strategy = item[0]
+                    locator = item[1]
+                elif isinstance(item, str):
+                    locator = item
+                else:
+                    raise TypeError(f'Expected item to be of type str or tuple, but got {type(item)}')
+
+                traversed_element = traversed_element.find_element(strategy, locator)
+
+        return strategy, traversed_element
