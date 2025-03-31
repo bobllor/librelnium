@@ -288,15 +288,15 @@ class Driver:
 
         self._execute_js(script)
         
-    def _traverse_html_elements(self, locator: str | By, html_elements: list[str]) -> WebElement:
-        '''Iterate through a list and return the associated WebElement.
+    def _traverse_html_elements(self, strategy: str | By, locators: list[str]) -> WebElement:
+        '''Iterate through a list of locators and return the last WebElement.
     
         If not found, a `NoSuchElementException` exception is raised.
         '''
-        element = self.presence_find_element(locator, value=html_elements[0])
+        element = self.presence_find_element(strategy, value=locators[0])
 
-        for i in html_elements[1:]:
-            element = element.find_element(locator, i)
+        for i in locators[1:]:
+            element = element.find_element(strategy, i)
         
         return element
     
