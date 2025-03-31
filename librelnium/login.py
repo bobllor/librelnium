@@ -47,7 +47,7 @@ class Login(Driver):
         login_info = {}
 
         if username is None:
-            login_info['user'] = input('Enter your username: ')
+            login_info['user'] = getpass('Enter your username: ')
         if password is None:
             login_info['pass'] = getpass('Enter your password: ')
 
