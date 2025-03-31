@@ -2,7 +2,6 @@ from .driver import Driver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import TimeoutException
-from typing import Any
 
 class Scraper(Driver):
     '''Class to scrape and interact with pages.'''
@@ -153,9 +152,17 @@ class Scraper(Driver):
         
         return elements
 
-    def drag(self, drag_to: str, locator: str | By = By.XPATH, search_val: str | WebElement = None):
+    def drag(self, 
+             drag_to: str, 
+             locator: str | By = By.XPATH, 
+             search_val: str | WebElement = None):
         '''Drags an element to a desired location on a page.
         
+        This method **assumes** that the element is always interactable. If an element is
+        hidden by overflow or is not displayed to the driver, call the `scroll_to_element` method 
+        to get to the element before calling this method. If an element is not interactable, 
+        a `ElementNotInteractableException` or a `JavascriptException` exceptions are raised.
+
         Parameters
         ----------
             drag_to: str
@@ -183,15 +190,12 @@ class Scraper(Driver):
             raise TypeError(f'Expected type str or WebElement for search_val, got type {type(search_val)}')
 
         drag_to_element = self.presence_find_element(locator, drag_to)
-        
+
         self.action_driver.click_and_hold(element).pause(.3)
 
         # the pause is necessary to wait for JS to update the new card location.
         self.action_driver.move_to_element(drag_to_element).release(drag_to_element).pause(.8)
         self.action_driver.perform()
-
-        # TODO: javascriptexception fix by scrolling down on the page with the driver.
-        # it occurs due to the element being hidden by the overflow content
 
     def _traverse_locators(self,
                         strategy: str, 
@@ -200,9 +204,10 @@ class Scraper(Driver):
         '''Traverses a list of locators and return a tuple consisting of a strategy 
         locator and a WebElement.
         
-        Note: Before calling this method, ensure that the **last locator is popped** from the list
-        of locators. This method traverses and returns a WebElement of the second-to-last locator 
-        of the original list.
+        Note: Before calling this method, ensure that the **first and last locator are excluded** from 
+        the list of locators. This method traverses and returns a WebElement of the second-to-last 
+        locator of the original list. Additionally, the first locator of the list is used as the
+        initial WebElement for the method.
 
         If an empty list is given, then it returns the WebElement of the given strategy and locator
         instead (which are the values of the first tuple).
@@ -224,10 +229,9 @@ class Scraper(Driver):
             tuple[str | None, WebElement]
                 A tuple containing:
                     1. A string representing the locator strategy. This will be the first
-                    tuple strategy or a strategy of from the tuple in the locator list. This will be
+                    tuple strategy or a strategy from the tuple in the locator list. This will be
                     overwritten in the calling method if the last locator is a tuple.
                     2. The WebElement of the **second-to-last locator** in the original list of locators.
-                    The locator is the one before the last locator is poped.
         '''
         traversed_element = self.presence_find_element(strategy, locator)
 
