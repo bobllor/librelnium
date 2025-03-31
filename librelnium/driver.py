@@ -264,7 +264,8 @@ class Driver:
                 # loop used to ensure the JS function above completes.
                 for i in range(loop_limit + 3):
                     if i % 3 == 0:
-                        element_found: bool = web_element.is_displayed()
+                        element_found: bool = self._execute_js(
+                            'return arguments[0].checkVisibility()', web_element)
                     
                     if element_found:
                         break
