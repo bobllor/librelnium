@@ -273,6 +273,11 @@ class Driver:
                     time.sleep(.5)
 
         self._execute_js('arguments[0].scrollIntoView()', web_element)
+    
+    def is_visible(self, element: WebElement) -> bool:
+        '''Returns True if a WebElement is inside the viewport of the driver.'''
+
+        return self._execute_js('return arguments[0].checkVisibility()', element)
 
     def _inject_script(self, script_name: str):
         '''Inject a script into the current window. The path is automatically pointed to the `js_scripts`
