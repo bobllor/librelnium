@@ -160,8 +160,8 @@ class Scraper(Driver):
              search_val: str | WebElement = None):
         '''Drags an element to a desired location on a page.
         
-        This method **assumes** that the element is always interactable. If an element is
-        hidden by overflow or is not displayed to the driver, call the `scroll_to_element` method 
+        This method assumes that the **element is always interactable**. If an element can be
+        hidden by overflow or not displayed to the driver, call the `scroll_to_element` method 
         to get to the element before calling this method. If an element is not interactable, 
         `ElementNotInteractableException` or `JavascriptException` exceptions are raised.
 
@@ -206,13 +206,13 @@ class Scraper(Driver):
         '''Traverses a list of locators and return a tuple consisting of a strategy 
         locator and a WebElement.
         
-        Note: Before calling this method, ensure that the **first and last locator are excluded** from 
-        the list of locators. This method traverses and returns a WebElement of the second-to-last 
-        locator of the original list. Additionally, the first locator of the list is used as the
-        initial WebElement for the method.
+        Before calling this method, ensure that the **first and last locator are excluded** from 
+        the list of locators. This method is expected to traverse and return a WebElement of the second-to-last 
+        locator of the original list. The last locator is used as the query outside of this method, while the 
+        first locator is used as the `strategy` and `locator` parameters of this method.
 
-        If an empty list is given, then it returns the WebElement of the given strategy and locator
-        instead (which are the values of the first tuple).
+        If an empty list is given, then it returns the WebElement of the arguments `strategy` and `locator` 
+        (which are the values of the first tuple).
 
         Parameters
         ----------
