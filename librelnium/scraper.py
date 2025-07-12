@@ -2,38 +2,39 @@ from .driver import Driver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import TimeoutException
+from .support.utils import is_list_tuple
 
 class Scraper(Driver):
     '''Class to scrape and interact with pages.'''
     def __init__(self, driver):
         super().__init__(driver)
 
-    def get_element_attribute(self, locator: str | By, html_elements: list[str], *, attribute: str = 'value') -> str:
+    def get_element_attribute(self, html_elements: list[str], *, locator: str | By = By.ID, attribute: str = 'value') -> str:
         '''Get the attribute of an HTML element.
         
         Parameters
         ----------
-            locator: str | By
-                The locator used to search for the element.
-
             html_elements: list[str]
                 A list of HTML elements used to get an attribute of an element. The last element in the list
                 is where the search is being performed on. If more than one element is given, the method
                 assumes it is a nested element and navigates the tree accordingly.
 
-            attribute: str
+            locator: str | By, default 'id'
+                The locator used to search for the element. By default it searches by ID.
+
+            attribute: str, default 'value'
                 The HTML attribute to get the value from. By default is retrieves the `value` attribute.
         '''
-        web_ele = self._traverse_html_elements(locator, html_elements)
+        web_ele: WebElement = self._traverse_html_elements(locator, html_elements)
 
         return web_ele.get_attribute(attribute)
     
-    def get_element(self, strategy: str | By, locator: str) -> WebElement:
+    def get_element(self, *, strategy: str | By = By.ID, locator: str) -> WebElement:
         '''Return a WebElement with the given strategy and locator.
         
         Parameters
         ----------
-            strategy: str | By
+            strategy: str | By, default 'id'
                 The locator strategy used to find the element.
 
             locator: str
@@ -41,10 +42,8 @@ class Scraper(Driver):
         '''
         return self.presence_find_element(strategy, locator)
     
-    def get_elements(self,
-                     locators: list[tuple[str, str] | str]
-                     ) -> list[WebElement]:
-        '''Returns a list of WebElements based on the last locator in the list.
+    def get_elements(self, locators: list[tuple[str, str] | str] | tuple[tuple[str, str] | str, ...]) -> list[WebElement]:
+        '''Returns a list of WebElements based on the last locator in the list. The first value of 
         
         If multiple locators are given, then the method will assume the last locator is the TARGET
         and will navigate each item where the list of elements matching the TARGET is returned by
@@ -63,16 +62,19 @@ class Scraper(Driver):
                 The first element in `locators` **must be a tuple**, while each subsequent element can
                 be a tuple (with a new strategy) or a string.
         '''
-        if not isinstance(locators[0], tuple):
-            raise ValueError(f'The first element in locators must be a type tuple consisting of [strategy, locator]')
+        if not is_list_tuple(locators[0]):
+            raise ValueError(f'Got unexpected type {type(locators[0])}, expected type list or tuple.')
         
-        first_locator = locators.pop(0)
+        first_locator: str = locators.pop(0)
 
         if not all([isinstance(item, str) for item in first_locator]):
-            raise TypeError(f'Got unexpected type in the first element of locators, expected [str, str]')
+            raise TypeError(f'Got unexpected type in locators, expected type str')
 
-        strategy = first_locator[0]
-        locator = first_locator[1]
+        strategy: str = first_locator[0]
+        locator: str = first_locator[1]
+
+        # this does nothing but ensure the page loads, if it fails then an exception is thrown
+        self.presence_find_element(strategy, locator)
 
         if len(locators) > 0:
             last_locator = locators.pop()
@@ -90,13 +92,13 @@ class Scraper(Driver):
                 strategy = traversal_data[0]
                 locator = last_locator
             
-            element = traversal_data[1]
+            element: WebElement = traversal_data[1]
 
             return element.find_elements(strategy, locator)
             
         return self.find_elements(strategy, locator)
     
-    def search_for_element(self, search_val: str) -> WebElement | None:
+    def search_text(self, search_val: str) -> WebElement | None:
         '''Searches for a text and returns a WebElement matching the text.
         If not found, None is returned.
 
@@ -119,7 +121,7 @@ class Scraper(Driver):
         
         return element
 
-    def search_for_elements(self, search_val: str, html_elements: list[str]) -> list[WebElement] | list:
+    def search_all_text(self, search_val: str, html_elements: list[str]) -> list[WebElement] | list:
         '''Searches for a text and returns a list of WebElements matching the text.
 
         Searches for the elements based on the value of `search_val`, and returns WebElements that contains
