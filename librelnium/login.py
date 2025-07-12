@@ -14,20 +14,20 @@ class Login(Driver):
         super().__init__(driver)
     
     def login(self,
-              login_elements: dict[str, tuple[str, str]],
+              login_elements: dict[str, tuple[str, str] | list[str, str]],
+              *,
               username: str = None,
               password: str = None,
-              *, 
               frame: str = None,
               sleep_time: float | int = 0):
         '''
         Parameters
         ----------
-            login_elements: dict[str, tuple[str, str]
-                A dictionary containing three keys: `user_element`, `password_element`, `login_element`, 
-                with each having values of tuples of strings in the order of (HTML_ELEMENT, LOCATOR).
+            login_elements: dict[str, tuple[str, str] | list[str, str]]
+                A dictionary containing three keys: `user_ele`, `pass_ele`, `login_ele`, 
+                with the values being an Iterable of strings in the order of `[LOCATOR, HTML_ELEMENT]`.
 
-            username: str
+            username: str, default `None`
                 Default is `None` which prompts a manual input if no value is passed.
         
             password: str
@@ -55,9 +55,11 @@ class Login(Driver):
             self.switch_frames(frame)
         
         # [0] indicates the type of value, [1] is the key of the login_elements
-        login_values = [('user', 'user_element'), 
-                      ('pass', 'password_element'), 
-                      ('login', 'login_element')]
+        login_values = [
+            ('user', 'user_ele'), 
+            ('pass', 'password_ele'),
+            ('login', 'login_ele')
+        ]
 
         for key in login_values:
             type_ = key[0]
@@ -66,9 +68,9 @@ class Login(Driver):
             if value is None:
                 raise KeyError(f'Expected key {key[-1]} but got None')
             
-            html_element = value[0]
-            locator = value[-1]
-
+            locator: str = value[0]
+            html_element: str = value[-1]
+            
             web_element = self.presence_find_element(locator, html_element)
 
             if type_ != 'login':
