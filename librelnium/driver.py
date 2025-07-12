@@ -43,16 +43,21 @@ class Driver:
         elif driver == 'edge':
             driver = edge.WebDriver()
         
-        self.driver = driver
+        self.driver: WebDriver = driver
         
-        self.wait_time = 6
-        self.driver_wait = WebDriverWait(self.driver, self.wait_time)
-        self.action_driver = ActionChains(self.driver)
+        self.wait_time: int = 6
+        self.driver_wait: WebDriverWait = WebDriverWait(self.driver, self.wait_time)
+        self.action_driver: ActionChains = ActionChains(self.driver)
         
     def set_wait_timer(self, value: float | int = 6) -> None:
         '''Sets the wait timer for `WebDriverWait` to a given value. 
         Setting the wait timer will effect the time it takes to look for an element.
-        By default it is 6 seconds.'''
+
+        Parameters
+        -----------
+            value: float | int, default `6`
+                The given wait time.
+        '''
         self.wait_time = value
 
         self.driver_wait = WebDriverWait(self.driver, self.wait_time)
