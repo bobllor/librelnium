@@ -1,7 +1,24 @@
 from .driver import Driver
 from getpass import getpass
+from typing import TypedDict, get_args
+from .support.types import Locator
+from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.common.keys import Keys
 
-import time
+class LoginElements(TypedDict):
+    '''Type to hold the login WebElements. 
+    
+    These are expected to be the properties of DOM elements, 
+    such as `classes`, `IDs`, or `CSS selectors`.
+
+    The button element is optional. If omitted, then the WebDriver will
+    hit the enter key instead of hitting the button.
+
+    Example: `#user_fmt` - ID of an HTML element 
+    '''
+    user_element: str
+    password_element: str
+    button_element: str | None
 
 class Login(Driver):
     def __init__(self, driver):
@@ -14,18 +31,36 @@ class Login(Driver):
         super().__init__(driver)
     
     def login(self,
-              login_elements: dict[str, tuple[str, str] | list[str, str]],
-              *,
-              username: str = None,
-              password: str = None,
-              frame: str = None,
-              sleep_time: float | int = 0):
+        elements: LoginElements,
+        *,
+        locators: list[Locator] = [],
+        multi_page: bool = False,
+        frame: str = None,
+        username: str = None,
+        password: str = None
+        ):
         '''
+        Starts the login process. This does not handle MFA or additional pages after a login.
+
         Parameters
         ----------
-            login_elements: dict[str, tuple[str, str] | list[str, str]]
-                A dictionary containing three keys: `user_ele`, `pass_ele`, `login_ele`, 
-                with the values being an Iterable of strings in the order of `[LOCATOR, HTML_ELEMENT]`.
+            elements: LoginElements
+                A dictionary containing the DOM element properties for LoginElements. The DOM element
+                for the button is not required.
+            
+            locators: list[Locator]
+                A list of locators used for the DOM element attribute. The list order matters, from first to last:
+                username locator, password locator, and button locator. The list is expected
+                to be the same length as `elements`. If the list is not the same length or the list has invalid
+                Locator values, then it will automatically *default* to `css selector`.
+            
+            multi_page: bool
+                Indicates if the login is a multi-page/step login. Used if the username and password are on separate
+                pages rather than all on one page.
+
+            frame: str
+                An attribute of the DOM element of a frame on the page. If a value is given, the driver 
+                will switch to the frame.
 
             username: str, default `None`
                 Default is `None` which prompts a manual input if no value is passed.
@@ -33,52 +68,52 @@ class Login(Driver):
             password: str
                 Default is `None` which prompts a manual input if no value is passed. 
                 The input for `password` is hidden.
-
-            frame: str
-                If a value is given, the driver will switch to the frame.
-
-            sleep_time: int | float
-                A timer used to delay the driver after a login. Useful if there is a delay after
-                logging in. By default it has no delay.
         '''
-        if not all(isinstance(k, str) for k in login_elements.keys()):
-            raise TypeError('Expected str for keys in dictionary')
-        
-        login_info = {}
+        user: str = ""
+        pw: str = ""
 
         if username is None:
-            login_info['user'] = getpass('Enter your username: ')
+            user = getpass('Enter your username: ')
         if password is None:
-            login_info['pass'] = getpass('Enter your password: ')
+            pw = getpass('Enter your password: ')
 
         if frame is not None:
             self.switch_frames(frame)
         
-        # [0] indicates the type of value, [1] is the key of the login_elements
-        login_values = [
-            ('user', 'user_ele'), 
-            ('pass', 'password_ele'),
-            ('login', 'login_ele')
-        ]
+        if len(locators) > 3:
+            locators = locators[0:2]
+        elif len(locators) < 3:
+            for _ in range(3 - len(locators)):
+                locators.append("css selector")
+        temp: list[Locator] = []
+        for loc in locators:
+            loc_t: Locator = loc.lower()
 
-        for key in login_values:
-            type_ = key[0]
-            value = login_elements.get(key[-1])
-
-            if value is None:
-                raise KeyError(f'Expected key {key[-1]} but got None')
-            
-            locator: str = value[0]
-            html_element: str = value[-1]
-            
-            web_element = self.presence_find_element(locator, html_element)
-
-            if type_ != 'login':
-                web_element.send_keys(login_info.get(type_))
+            if loc_t in {base_loc for base_loc in get_args(Locator)}:
+                temp.append(loc_t)
             else:
-                web_element.click()
+                temp.append("css selector")
+        locators = temp
 
-        self.switch_default_frame()
+        user_element: WebElement = self.find_element(locators[0], elements["user_element"])
+        user_element.send_keys(user)
 
-        # in case there is a page loading delay
-        time.sleep(sleep_time)
+        if multi_page:
+            self.send_keys(Keys.ENTER, pause=1)
+
+        pw_element: WebElement | None = self.find_element(locators[1], elements["password_element"], return_none=True)
+
+        if pw_element is not None:
+            pw_element.send_keys(pw)
+        
+        # locators[2] only matters if button is not None
+        found_button: bool = False
+        if elements.get("button_element") is not None:
+            button_element: WebElement | None = self.find_element(locators[-1], elements["button_element"], return_none=True)
+
+            if button_element is not None:
+                button_element.click()
+                found_button = True
+
+        if not found_button:
+            self.send_keys(Keys.ENTER, pause=0.5)
