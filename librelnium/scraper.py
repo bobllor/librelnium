@@ -40,7 +40,7 @@ class Scraper(Driver):
             locator: str
                 The locator for an HTML element.
         '''
-        return self.presence_find_element(strategy, locator)
+        return self.find_element(strategy, locator)
     
     def get_elements(self, locators: list[tuple[str, str] | str] | tuple[tuple[str, str] | str, ...]) -> list[WebElement]:
         '''Returns a list of WebElements based on the last locator in the list. The first value of 
@@ -74,7 +74,7 @@ class Scraper(Driver):
         locator: str = first_locator[1]
 
         # this does nothing but ensure the page loads, if it fails then an exception is thrown
-        self.presence_find_element(strategy, locator)
+        self.find_element(strategy, locator)
 
         if len(locators) > 0:
             last_locator = locators.pop()
@@ -114,7 +114,7 @@ class Scraper(Driver):
             raise TypeError(f'Expected search_val to be type str, instead got {type(search_val)}.')
 
         try:
-            element = self.presence_find_element(By.XPATH,
+            element = self.find_element(By.XPATH,
             f'//*[contains(text(), "{search_val}")]')
         except TimeoutException:
             return None
@@ -191,7 +191,7 @@ class Scraper(Driver):
         else:
             raise TypeError(f'Expected type str or WebElement for search_val, got type {type(search_val)}')
 
-        drag_to_element = self.presence_find_element(locator, drag_to)
+        drag_to_element = self.find_element(locator, drag_to)
 
         self.action_driver.click_and_hold(element).pause(.3)
 
@@ -235,7 +235,7 @@ class Scraper(Driver):
                     overwritten in the calling method if the last locator is a tuple.
                     2. The WebElement of the **second-to-last locator** in the original list of locators.
         '''
-        traversed_element = self.presence_find_element(strategy, locator)
+        traversed_element = self.find_element(strategy, locator)
 
         if len(locators) > 0:
             for item in locators:

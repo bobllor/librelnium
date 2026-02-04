@@ -29,7 +29,7 @@ class FormFiller(Driver):
         '''
         # tup[0] is the value, tup[1] is the HTML value, tup[2] is the locator strategy. 
         for tup in values_info:
-            element: WebElement = self.presence_find_element(tup[2], tup[1])
+            element: WebElement = self.find_element(tup[2], tup[1])
             
             element.send_keys(tup[0])
 
@@ -47,7 +47,7 @@ class FormFiller(Driver):
             by: str | By
                 The locator used to find the element. By default it is By.ID.
         '''
-        submit_element: WebElement = self.presence_find_element(locator, submit_element)
+        submit_element: WebElement = self.find_element(locator, submit_element)
 
         submit_element.click()
 
