@@ -6,16 +6,19 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.remote.shadowroot import ShadowRoot
 from selenium.common.exceptions import TimeoutException, NoSuchFrameException
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.chrome.options import Options as chromeOptions
+from typing import Any, Literal
+from .support.types import Locator
 import selenium.webdriver.chrome.webdriver as chrome
 import selenium.webdriver.firefox.webdriver as firefox
 import selenium.webdriver.edge.webdriver as edge
-from selenium.webdriver.chrome.options import Options as chromeOptions
-from typing import Any
 import time
+
+type Drivers = Literal["chrome", "firefox", "edge"]
 
 class Driver:
     '''Base class for WebDriver related navigation and methods.'''
-    def __init__(self, driver: str | WebDriver = None, option_args: list[str] = None):
+    def __init__(self, driver: Drivers | WebDriver = "chrome", *, option_args: list[str] = None, wait_timer: int = 10):
         '''
         Parameters
         ----------
@@ -26,6 +29,10 @@ class Driver:
             
             options: list[str]
                 A list of strings that contain arguments to add into the options for the driver.
+
+            wait_timer: int
+                The default time to wait for finding elements in seconds. If the timer
+                reaches the given number then a TimeoutException is raised. By default it is 10 seconds.
         '''
         if option_args is not None and not any(isinstance(option, str) for option in option_args):
             raise TypeError('Got unexpected type in option_args.')
@@ -36,7 +43,7 @@ class Driver:
             options.add_experimental_option('excludeSwitches', ['enable-logging'])
             options.add_argument('--disable-logging')
         
-        if driver == 'chrome' or driver is None:
+        if driver == 'chrome':
             driver = chrome.WebDriver(options=options)
         elif driver == 'firefox':
             driver = firefox.WebDriver()
@@ -45,22 +52,34 @@ class Driver:
         
         self.driver: WebDriver = driver
         
-        self.wait_time: int = 6
-        self.driver_wait: WebDriverWait = WebDriverWait(self.driver, self.wait_time)
+        self.driver_wait: WebDriverWait = WebDriverWait(self.driver, wait_timer)
         self.action_driver: ActionChains = ActionChains(self.driver)
         
-    def set_wait_timer(self, value: float | int = 6) -> None:
-        '''Sets the wait timer for `WebDriverWait` to a given value. 
-        Setting the wait timer will effect the time it takes to look for an element.
+    def set_find_timer(self, value: float | int = 6) -> None:
+        '''Sets the find element timer for WebDriverWait. This effects the max time in
+        seconds before a `TimeoutException` occurs while finding a DOM element.
 
         Parameters
         -----------
-            value: float | int, default `6`
-                The given wait time.
+            value: float | int
+                The wait time in seconds. It can take be a float or integer.
+                By default it is 6 seconds.
         '''
-        self.wait_time = value
-
-        self.driver_wait = WebDriverWait(self.driver, self.wait_time)
+        self.driver_wait = WebDriverWait(self.driver, value)
+    
+    def send_keys(self, key: str, *, pause: int | float = 0) -> ActionChains:
+        '''Uses the action driver to send a key.
+        
+        Parameters
+        ----------
+            key: str
+                The key to send to the action driver.
+            
+            pause: int | float
+                A number used to pause the action driver after sending the key. By default
+                it is 0 seconds.
+        '''
+        return self.action_driver.send_keys(key).pause(pause).perform()
     
     def go_to(self, url: str) -> None:
         '''Sends the driver to a URL.'''
@@ -154,9 +173,11 @@ class Driver:
 
         self.switch_frames(sr.find_element(By.CSS_SELECTOR, 'iframe'))
             
-    def presence_find_element(self, locator: str | By = By.ID, value: str = None) -> WebElement:
-        '''Return a `WebElement` by using an expected condition and `WebDriverWait`. 
-        If no element is found, a `TimeoutException` exception is raised.
+    def find_element(self, locator: Locator = "id", value: str = None, *, return_none: bool = False) -> WebElement:
+        '''Returns a WebElement if found using the value and locator. 
+
+        If no element is found, a `TimeoutException` exception is raised. This can return None if
+        `return_none` is true.
         
         Parameters
         ----------
@@ -166,13 +187,22 @@ class Driver:
 
             value: str
                 The attribute of a HTML element. This can be any `str` value that matches the locator strategy.
+            
+            return_none: bool
+                If true, then return `None` when the `TimeoutException` occurs. By default it is false.
         '''
-        if locator is None or value is None:
-            raise TypeError
+        if not isinstance(value, str):
+            raise TypeError(f"Cannot perform operation on given value type '{type(value)}`")
 
-        ele = self.driver_wait.until(EC.presence_of_element_located(
-            (locator, value)
-        ))
+        try:
+            ele = self.driver_wait.until(EC.presence_of_element_located(
+                (locator, value)
+            ))
+        except TimeoutException as exc:
+            if return_none:
+                return None
+
+            raise exc
         
         return ele
 
@@ -304,7 +334,7 @@ class Driver:
     
         If not found, a `NoSuchElementException` exception is raised.
         '''
-        element = self.presence_find_element(strategy, value=locators[0])
+        element = self.find_element(strategy, value=locators[0])
 
         for i in locators[1:]:
             element = element.find_element(strategy, i)
